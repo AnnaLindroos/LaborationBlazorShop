@@ -1,0 +1,62 @@
+﻿@page "/productlist"
+@page "/produstlist/{Id:int}"
+@inject ProductService productService
+@inject NavigationManager navigationManager
+@rendermode InteractiveServer
+@attribute [StreamRendering]
+
+
+<h3>Products</h3>
+
+
+@if (products == null)
+{
+    <p>Loading...</p>
+}
+else if (products.Count == 0)
+{
+    <p>No products in database</p>
+}
+else
+{
+    if (Id is null)
+    {
+        <ul class="list-unstyled">
+            @foreach (var product in products)
+            {
+                <ViewProducts ProductInfo="product" />
+            }
+        </ul>
+    }
+    else
+    {
+        <SingleProduct ProductInfo="singleProduct" />
+    }
+}
+
+@code {
+
+    [Parameter]
+    public int? Id { get; set; }
+
+    private List<Product> products;
+
+    private Product singleProduct;
+
+    protected override async Task OnInitializedAsync()
+    {
+        products = await productService.GetAllProducts();
+        StateHasChanged();
+
+        var result = await productService.GetProductById((int)Id);
+        if (result is not null)
+        {
+            singleProduct = result;
+        }
+    }
+
+    private void ViewProduct(int id)
+    {
+        navigationManager.NavigateTo("/productlist/" + id);
+    }
+}

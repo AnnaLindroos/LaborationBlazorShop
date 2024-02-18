@@ -1,0 +1,24 @@
+﻿<li class="media my-3">
+    <div class="media-img-wrapper mr-2">
+        <a href="/product/@ProductInfo.Id">
+            <img class="media-img" style="width:1000px; height:1000px;" src="@ProductInfo.Image" alt="@ProductInfo.Title" />
+        </a>
+    </div>
+    <div class="media-body">
+        <a href="/product/@ProductInfo.Id">
+            <h4 class="mb-0">@ProductInfo.Title</h4>
+        </a>
+        @if (ProductInfo.OriginalPrice > ProductInfo.Price)
+        {
+            <h6 class="text-muted original-price">$@ProductInfo.OriginalPrice</h6>
+        }
+        <h5 class="price">
+            $@ProductInfo.Price
+        </h5>
+    </div>
+</li>
+
+@code {
+    [Parameter]
+    public Product ProductInfo { get; set; }
+}
