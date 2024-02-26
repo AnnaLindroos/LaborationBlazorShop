@@ -1,62 +1,146 @@
 ﻿@page "/productlist"
-@page "/produstlist/{Id:int}"
+@page "/productlist/{ProductId:int}"
 @inject ProductService productService
 @inject NavigationManager navigationManager
+@inject CurrencyService currencyService
+@inject CartService cartService
+@inject HttpClient httpClient
+@inject ApplicationDbContext db
+@inject AuthenticationStateProvider authenticationStateProvider
+@inject UserManager<ApplicationUser> userManager
 @rendermode InteractiveServer
 @attribute [StreamRendering]
+@* @attribute [Authorize] *@
 
+<Navbar />
 
-<h3>Products</h3>
+<AuthorizeView>
+    <Authorized>
+        <p>Shopping Cart:</p>
 
-
-@if (products == null)
-{
-    <p>Loading...</p>
-}
-else if (products.Count == 0)
-{
-    <p>No products in database</p>
-}
-else
-{
-    if (Id is null)
-    {
-        <ul class="list-unstyled">
-            @foreach (var product in products)
+        <div>
+            @foreach (var product in cartService.ShoppingCart)
             {
-                <ViewProducts ProductInfo="product" />
+                <p>@product.Title</p>
             }
-        </ul>
-    }
-    else
-    {
-        <SingleProduct ProductInfo="singleProduct" />
-    }
-}
+        </div>
+
+        @if (Products == null)
+        {
+            <p>Loading...</p>
+        }
+
+        else
+        {
+            if (ProductId is null)
+            {
+                <h3>Products</h3>
+
+                <ul class="list-unstyled">
+                    @foreach (var product in Products)
+                    {
+                        <ViewProducts ProductInfo="product" ExchangeRate="currencyService.ExchangeRate" SelectedCurrency="currencyService.SelectedCurrency" OnAddToCart="async () => AddProduct(product)" />
+                    }
+                </ul>
+            }
+            else
+            {
+
+                <SingleProduct ProductInfo="SingleProduct" ExchangeRate="currencyService.ExchangeRate" SelectedCurrency="currencyService.SelectedCurrency" OnAddToCart="async () => AddProduct(SingleProduct)" />
+            }
+        }
+    </Authorized>
+    <NotAuthorized>
+        <p>Shopping Cart:</p>
+        <div>
+            @foreach (var product in TemporaryShoppingCart)
+            {
+                <p>@product.Title</p>
+            }
+
+            @if (Products == null)
+            {
+                <p>Loading...</p>
+            }
+
+            else
+            {
+                if (ProductId is null)
+                {
+                    <h3>Products</h3>
+
+                    <ul class="list-unstyled">
+                        @foreach (var product in Products)
+                        {
+                            <ViewProducts ProductInfo="product" ExchangeRate="currencyService.ExchangeRate" SelectedCurrency="currencyService.SelectedCurrency" OnAddToCart=" () => RedirectToLogin()" />
+                        }
+                    </ul>
+                }
+                else
+                {
+                    <SingleProduct ProductInfo="SingleProduct" ExchangeRate="currencyService.ExchangeRate" SelectedCurrency="currencyService.SelectedCurrency" OnAddToCart="() => RedirectToLogin()" />
+                }
+            }
+        </div>
+    </NotAuthorized>
+</AuthorizeView>
+
 
 @code {
 
     [Parameter]
-    public int? Id { get; set; }
+    public int? ProductId { get; set; }
 
-    private List<Product> products;
+    private List<Product> Products = new();
 
-    private Product singleProduct;
+    private Product SingleProduct = new();
 
-    protected override async Task OnInitializedAsync()
+    public List<Product> TemporaryShoppingCart = new();
+
+    public string? UserId;
+
+    public async void AddProduct(Product product)
     {
-        products = await productService.GetAllProducts();
+        await cartService.AddToCart(product, UserId);
         StateHasChanged();
-
-        var result = await productService.GetProductById((int)Id);
-        if (result is not null)
-        {
-            singleProduct = result;
-        }
     }
 
-    private void ViewProduct(int id)
+    private void RedirectToLogin()
     {
-        navigationManager.NavigateTo("/productlist/" + id);
+        navigationManager.NavigateTo("/login.razor");
     }
+
+    private void OnStateChange()
+    {
+        InvokeAsync(() => StateHasChanged());
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            currencyService.OnStateChange += OnStateChange;
+
+            var authState = await authenticationStateProvider.GetAuthenticationStateAsync();
+
+            if (authState.User.Identity.IsAuthenticated)
+            {
+                UserId = authState.User.Claims.Where(c => c.Type == ClaimTypes.NameIdentifier).First().Value;
+            }
+
+            if (ProductId is null)
+            {
+                Products = await productService.GetAllProducts();
+            }
+            else
+            {
+                var result = await productService.GetProductById((int)ProductId);
+                if (result is not null)
+                {
+                    SingleProduct = result;
+                }
+            }
+            StateHasChanged();
+        }
+    } 
 }

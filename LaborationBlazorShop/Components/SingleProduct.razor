@@ -1,24 +1,45 @@
-﻿<li class="media my-3">
-    <div class="media-img-wrapper mr-2">
-        <a href="/product/@ProductInfo.Id">
-            <img class="media-img" style="width:1000px; height:1000px;" src="@ProductInfo.Image" alt="@ProductInfo.Title" />
-        </a>
-    </div>
-    <div class="media-body">
-        <a href="/product/@ProductInfo.Id">
-            <h4 class="mb-0">@ProductInfo.Title</h4>
-        </a>
-        @if (ProductInfo.OriginalPrice > ProductInfo.Price)
-        {
-            <h6 class="text-muted original-price">$@ProductInfo.OriginalPrice</h6>
-        }
-        <h5 class="price">
-            $@ProductInfo.Price
-        </h5>
-    </div>
-</li>
+﻿@inject CurrencyService currencyService
+<script src="https://kit.fontawesome.com/162d3fb615.js" crossorigin="anonymous"></script>
+
+<div class="media-img-wrapper mr-2">
+    <a href="/productlist/@ProductInfo.Id">
+        <img class="non-clickable-image mb-3" style="width:700px; height:700px;" src="@ProductInfo.Image" alt="@ProductInfo.Title" />
+    </a>
+</div>
+<div class="media-body">
+    <a href="/productlist/@ProductInfo.Id">
+        <h4 class="mb-0">@ProductInfo.Title</h4>
+    </a>
+    <p>@ProductInfo.Description</p>
+    <p>Product Id: @ProductInfo.Id</p>
+    @if (ProductInfo.OriginalPrice > ProductInfo.Price)
+    {
+        <h6 class="text-muted text-decoration-line-through">@(($"{ProductInfo.Price * ExchangeRate:0.000} {currencyService.SelectedCurrency}"))</h6>
+    }
+    <h5 class="price">
+        @(($"{ProductInfo.Price * ExchangeRate:0.000} {currencyService.SelectedCurrency}"))
+    </h5>
+    <button @onclick="HandleOnAddToCart" @onclick:stopPropagation class="btn @(ProductInfo.Stock > 0 ? "btn-primary" : "btn-outline-secondary disabled")">
+        <i class="fa-solid fa-cart-shopping" style="z-index: 1;"></i>&nbsp;&nbsp;&nbsp;@(ProductInfo.Stock > 0 ? "Add to cart" : "Out of stock")
+    </button>
+</div>
 
 @code {
+
     [Parameter]
     public Product ProductInfo { get; set; }
+
+    [Parameter]
+    public string SelectedCurrency { get; set; }
+
+    [Parameter]
+    public decimal ExchangeRate { get; set; }
+
+    [Parameter]
+    public EventCallback OnAddToCart { get; set; }
+
+    public async Task HandleOnAddToCart()
+    {
+        await OnAddToCart.InvokeAsync();
+    }
 }

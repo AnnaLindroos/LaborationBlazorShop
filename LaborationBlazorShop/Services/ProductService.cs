@@ -20,12 +20,15 @@ public class ProductService
     public async Task<List<Product>> GetAllProducts()
     {
         await Task.Delay(1000);
-        var products = await _applicationDbContext.Products.ToListAsync();
-        return products;
+        return await _applicationDbContext.Products.ToListAsync();
     }
 
     public async Task<Product?> GetProductById(int id)
     {
         return await _applicationDbContext.Products.FirstOrDefaultAsync(x => x.Id == id);
+    }
+    public async Task<CartProduct?> IsProductInCart(Product product)
+    {
+        return await _applicationDbContext.ProductsInCarts.FirstOrDefaultAsync(x => x.ProductId.Equals(product.Id));
     }
 }

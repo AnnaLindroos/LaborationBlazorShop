@@ -1,0 +1,41 @@
+﻿@inject CurrencyService currencyService
+@inject HttpClient httpClient
+
+@using LaborationBlazorShop.Models
+@using LaborationBlazorShop.Services
+<div class="navbar">
+    <div>
+        <label>Currency:</label>
+        <select value="@currencyService.SelectedCurrency" @onchange="HandleCurrencyChange">
+            <option value="USD">United States Dollar</option>
+            <option value="EUR">Euro</option>
+            <option value="GBP">British Pound</option>
+            <option value="AUD">Australian Dollar</option>
+        </select>
+    </div>
+</div>
+
+@code {
+
+    [Parameter]
+    public EventCallback<string> OnCurrencyChange { get; set; }
+
+    private string SelectedCurrency;
+
+    public decimal ExchangeRate { get; set; }
+
+    private async Task HandleCurrencyChange(ChangeEventArgs args)
+    {
+        SelectedCurrency = args.Value?.ToString();
+        ExchangeRate = await currencyService.ConvertCurrencyAsync(httpClient, SelectedCurrency);
+
+        await InvokeAsync(() =>
+        {
+            currencyService.SelectedCurrency = SelectedCurrency;
+            currencyService.ExchangeRate = ExchangeRate;
+            currencyService.NotifyStateChanged();
+            StateHasChanged();
+        });
+    }
+}
+
