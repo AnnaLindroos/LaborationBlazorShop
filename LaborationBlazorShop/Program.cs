@@ -41,11 +41,12 @@ builder.Services.AddIdentityCore<ApplicationUser>(options => options.SignIn.Requ
     .AddSignInManager()
     .AddDefaultTokenProviders();
 
-builder.Services.AddScoped<ProductService>();
 
 builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
 builder.Services.AddScoped<HttpClient>();
 builder.Services.AddScoped<CartService>();
+builder.Services.AddScoped<ProductService>();
+builder.Services.AddScoped<UserService>();
 
 var apiKey = File.ReadAllText("key.txt");
 builder.Services.AddSingleton<CurrencyService>(new CurrencyService(apiKey));

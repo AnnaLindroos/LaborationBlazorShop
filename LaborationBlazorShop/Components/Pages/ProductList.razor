@@ -4,27 +4,30 @@
 @inject NavigationManager navigationManager
 @inject CurrencyService currencyService
 @inject CartService cartService
+@inject UserService userService
 @inject HttpClient httpClient
 @inject ApplicationDbContext db
 @inject AuthenticationStateProvider authenticationStateProvider
 @inject UserManager<ApplicationUser> userManager
 @rendermode InteractiveServer
 @attribute [StreamRendering]
-@* @attribute [Authorize] *@
 
 <Navbar />
 
 <AuthorizeView>
     <Authorized>
-        <p>Shopping Cart:</p>
+        <div class="d-flex justify-content-end">
+            <button @onclick="RedirectToCheckout" class="btn btn-primary">Go to checkout</button>
+        </div>
+        <h5 class="text-primary">Shopping Cart:</h5>
+
+        @foreach (var product in cartService.ShoppingCart)
+        {
+            <p class="mb-0 text-info">@product.Title</p>
+        }
+        <br/>
 
         <div>
-            @foreach (var product in cartService.ShoppingCart)
-            {
-                <p>@product.Title</p>
-            }
-        </div>
-
         @if (Products == null)
         {
             <p>Loading...</p>
@@ -45,19 +48,17 @@
             }
             else
             {
-
                 <SingleProduct ProductInfo="SingleProduct" ExchangeRate="currencyService.ExchangeRate" SelectedCurrency="currencyService.SelectedCurrency" OnAddToCart="async () => AddProduct(SingleProduct)" />
             }
         }
+        </div>
     </Authorized>
     <NotAuthorized>
-        <p>Shopping Cart:</p>
+        <div class="d-flex justify-content-end"> 
+            <button @onclick="RedirectToLogin" class="btn btn-primary">Go to checkout</button>
+        </div>
+        <br />
         <div>
-            @foreach (var product in TemporaryShoppingCart)
-            {
-                <p>@product.Title</p>
-            }
-
             @if (Products == null)
             {
                 <p>Loading...</p>
@@ -95,8 +96,6 @@
 
     private Product SingleProduct = new();
 
-    public List<Product> TemporaryShoppingCart = new();
-
     public string? UserId;
 
     public async void AddProduct(Product product)
@@ -105,9 +104,14 @@
         StateHasChanged();
     }
 
+    private void RedirectToCheckout()
+    {
+        navigationManager.NavigateTo("/checkout");
+    }
+
     private void RedirectToLogin()
     {
-        navigationManager.NavigateTo("/login.razor");
+        navigationManager.NavigateTo("/Account/Login");
     }
 
     private void OnStateChange()
@@ -121,12 +125,9 @@
         {
             currencyService.OnStateChange += OnStateChange;
 
-            var authState = await authenticationStateProvider.GetAuthenticationStateAsync();
+            var CheckauthState = await userService.IsUserAuthenticated();
 
-            if (authState.User.Identity.IsAuthenticated)
-            {
-                UserId = authState.User.Claims.Where(c => c.Type == ClaimTypes.NameIdentifier).First().Value;
-            }
+            UserId = CheckauthState;
 
             if (ProductId is null)
             {

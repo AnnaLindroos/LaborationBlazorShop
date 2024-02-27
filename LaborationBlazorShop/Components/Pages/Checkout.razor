@@ -1,0 +1,67 @@
+﻿@page "/checkout"
+@inject UserService userService
+@inject UserManager<ApplicationUser> userManager
+@inject NavigationManager navigationManager
+@inject AuthenticationStateProvider stateProvider
+@inject CurrencyService currencyService
+@rendermode InteractiveServer
+@attribute [StreamRendering]
+@attribute [Authorize]
+
+<h3 class="text-danger">Checkout</h3>
+<br />
+<h4 class="text-warning">Total: @String.Format("{0:F2}", CountTotal(userService.ProductsToCheckout))</h4>
+
+<Navbar />
+
+<form>
+    <fieldset class="bg-primary">
+        <legend class="bg-primary text-light mt-3"><b> Order Details </b></legend>
+        <input type="text" name="Name" id="name" placeholder="Name" required />
+        <input type="text" name="Address" id="address" placeholder="Adress" required />
+        <input class="mb-3"type="submit" id="send" value="Send" />
+    </fieldset>
+</form>
+<br />
+
+@foreach (var group in userService.ProductsToCheckout.GroupBy(item => item))
+{
+    var productInfo = group.Key;
+    var quantity = group.Count();
+    <CheckoutProduct ProductInfo="productInfo" Quantity="quantity" ExchangeRate="currencyService.ExchangeRate" SelectedCurrency="currencyService.SelectedCurrency" />
+}
+
+
+@code 
+{
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await stateProvider.GetAuthenticationStateAsync();
+        var user = await userManager.GetUserAsync(authState.User);
+        var userProducts = await userService.GetUserProducts(user
+        );
+    }
+
+    private void OnStateChange() => InvokeAsync(() => StateHasChanged());
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            currencyService.OnStateChange += OnStateChange;
+            StateHasChanged();
+        }
+    }
+
+    public decimal CountTotal(List<Product> productsToCheckout)
+    {
+        decimal sum = 0;
+
+        foreach (Product product in userService.ProductsToCheckout)
+        {
+            var currentPrice = product.Price * currencyService.ExchangeRate;
+            sum += currentPrice;
+        }
+        return sum;
+    }
+}

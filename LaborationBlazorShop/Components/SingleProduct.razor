@@ -3,7 +3,7 @@
 
 <div class="media-img-wrapper mr-2">
     <a href="/productlist/@ProductInfo.Id">
-        <img class="non-clickable-image mb-3" style="width:700px; height:700px;" src="@ProductInfo.Image" alt="@ProductInfo.Title" />
+        <img class="non-clickable-image mb-3" style="width:600px; height:600px;" src="@ProductInfo.Image" alt="@ProductInfo.Title" />
     </a>
 </div>
 <div class="media-body">
@@ -14,10 +14,10 @@
     <p>Product Id: @ProductInfo.Id</p>
     @if (ProductInfo.OriginalPrice > ProductInfo.Price)
     {
-        <h6 class="text-muted text-decoration-line-through">@(($"{ProductInfo.Price * ExchangeRate:0.000} {currencyService.SelectedCurrency}"))</h6>
+        <h6 class="text-muted text-decoration-line-through">@(($"{ProductInfo.OriginalPrice * ExchangeRate:0.00} {currencyService.SelectedCurrency}"))</h6>
     }
     <h5 class="price">
-        @(($"{ProductInfo.Price * ExchangeRate:0.000} {currencyService.SelectedCurrency}"))
+        @(($"{ProductInfo.Price * ExchangeRate:0.00} {currencyService.SelectedCurrency}"))
     </h5>
     <button @onclick="HandleOnAddToCart" @onclick:stopPropagation class="btn @(ProductInfo.Stock > 0 ? "btn-primary" : "btn-outline-secondary disabled")">
         <i class="fa-solid fa-cart-shopping" style="z-index: 1;"></i>&nbsp;&nbsp;&nbsp;@(ProductInfo.Stock > 0 ? "Add to cart" : "Out of stock")
@@ -37,6 +37,7 @@
 
     [Parameter]
     public EventCallback OnAddToCart { get; set; }
+
 
     public async Task HandleOnAddToCart()
     {
