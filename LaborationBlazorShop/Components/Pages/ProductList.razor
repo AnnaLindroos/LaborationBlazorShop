@@ -1,5 +1,5 @@
-﻿@page "/productlist"
-@page "/productlist/{ProductId:int}"
+﻿@page "/"
+@page "/{ProductId:int}"
 @inject ProductService productService
 @inject NavigationManager navigationManager
 @inject CurrencyService currencyService
@@ -17,7 +17,7 @@
 <AuthorizeView>
     <Authorized>
         <div class="d-flex justify-content-end">
-            <button @onclick="RedirectToCheckout" class="btn btn-primary">Go to checkout</button>
+            <button @onclick="RedirectToCheckout" class="btn btn-primary">Go to Shoppingcart/Checkout</button>
         </div>
         <h5 class="text-primary">Shopping Cart:</h5>
 
@@ -28,6 +28,7 @@
         <br/>
 
         <div>
+
         @if (Products == null)
         {
             <p>Loading...</p>
@@ -55,7 +56,7 @@
     </Authorized>
     <NotAuthorized>
         <div class="d-flex justify-content-end"> 
-            <button @onclick="RedirectToLogin" class="btn btn-primary">Go to checkout</button>
+            <button @onclick="RedirectToLogin" class="btn btn-primary">Go to Shoppingcart/Checkout</button>
         </div>
         <br />
         <div>
@@ -125,9 +126,9 @@
         {
             currencyService.OnStateChange += OnStateChange;
 
-            var CheckauthState = await userService.IsUserAuthenticated();
+            var userId = await userService.IsUserAuthenticated();
 
-            UserId = CheckauthState;
+            UserId = userId;
 
             if (ProductId is null)
             {

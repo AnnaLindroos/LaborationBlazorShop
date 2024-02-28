@@ -1,0 +1,54 @@
+﻿@page "/confirmationpage"
+@using LaborationBlazorShop.Client.DTOs
+@using LaborationBlazorShop.Client.Services
+@using Microsoft.AspNetCore.Authorization
+@using LaborationBlazorShop.Client.Components
+@inject IDataService dataService
+@attribute [Authorize]
+
+@rendermode InteractiveAuto
+
+<h3>Order Confirmation</h3>
+
+<span>
+    <p>Name: @Name</p>
+    <p>Address: @Address</p>
+    <p class ="text-danger">Total: @String.Format("{0:F2}", CountTotal(OrderedProducts))</p>
+</span>
+
+@foreach (var group in OrderedProducts.GroupBy(item => item.Id))
+{
+    var productId = group.Key;
+    var productInfo = OrderedProducts.First(item => item.Id == productId);
+    var quantity = group.Count();
+    <ConfirmedProduct ProductInfo="productInfo" Quantity="quantity" SelectedCurrency="productInfo.SelectedCurrency" ExchangeRate="productInfo.ExchangeRate"/>
+}
+
+@code 
+{
+    private string Name = string.Empty;
+
+    private string Address = string.Empty;
+
+    private List<ProductDTO> OrderedProducts = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        Name = await dataService.GetNameAsync();
+        Address = await dataService.GetAddressAsync();
+        OrderedProducts = await dataService.GetOrderedProductsAsync();
+    }
+
+    public decimal CountTotal(List<ProductDTO> productsToCheckout)
+    {
+        decimal sum = 0;
+
+        foreach (ProductDTO product in OrderedProducts)
+        {
+            var currentPrice = product.Price * product.ExchangeRate;
+            sum += currentPrice;
+        }
+        return sum;
+    }
+}
+

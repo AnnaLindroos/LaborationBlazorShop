@@ -30,7 +30,6 @@ public class CurrencyService
 
         var urlApi = ($"https://api.api-ninjas.com/v1/exchangerate?pair=USD_{chosenCurrency}");
 
-
         try
         {
             httpClient.DefaultRequestHeaders.Clear();

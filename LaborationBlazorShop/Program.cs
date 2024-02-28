@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using static System.Runtime.InteropServices.JavaScript.JSType;
+using LaborationBlazorShop.Client.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -47,6 +48,7 @@ builder.Services.AddScoped<HttpClient>();
 builder.Services.AddScoped<CartService>();
 builder.Services.AddScoped<ProductService>();
 builder.Services.AddScoped<UserService>();
+builder.Services.AddTransient<IDataService, DataService>();
 
 var apiKey = File.ReadAllText("key.txt");
 builder.Services.AddSingleton<CurrencyService>(new CurrencyService(apiKey));
@@ -87,6 +89,21 @@ app.MapRazorComponents<App>()
 
 // Add additional endpoints required by the Identity /Account Razor components.
 app.MapAdditionalIdentityEndpoints();
+
+app.MapGet("/api/confirmationpage-name", async (IDataService service) =>
+{
+    return TypedResults.Ok(await service.GetNameAsync());
+});
+
+app.MapGet("/api/confirmationpage-address", async (IDataService service) =>
+{
+    return TypedResults.Ok(await service.GetAddressAsync());
+});
+
+app.MapGet("/api/confirmationpage-productinfo", async (IDataService service) =>
+{
+    return TypedResults.Ok(await service.GetOrderedProductsAsync());
+});
 
 app.Run();
 
