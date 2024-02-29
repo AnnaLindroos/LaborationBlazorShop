@@ -6,6 +6,7 @@
 @inject NavigationManager navigationManager
 @inject AuthenticationStateProvider stateProvider
 @inject CurrencyService currencyService
+@inject CartService cartService
 @inject IDataService dataService
 @rendermode InteractiveServer
 @attribute [StreamRendering]
@@ -13,7 +14,7 @@
 
 <h3 class="text-danger">Checkout</h3>
 <br />
-<h4 class="text-warning">Total: @String.Format("{0:F2}", CountTotal(userService.ProductsToCheckout))</h4>
+<h4 class="text-warning">Total: @String.Format("{0:F2}", CountTotal(userService.ProductsToCheckout)) @currencyService.SelectedCurrency</h4>
 
 <Navbar />
 <span>
@@ -24,18 +25,20 @@
             <input @bind="@userService.Address" type="text" name="Address" id="address" placeholder="Adress" required />
         </fieldset>
     </form>
-    <button @onclick="RedirectToConfirmation" class="btn btn-primary">Confirm order</button>
+    <button @onclick="@(() => { RedirectToConfirmation(); EmptyCart(); })" class="btn btn-primary">Confirm order</button>
 </span>
 
 <br />
+<br />
 
-@foreach (var group in userService.ProductsToCheckout.GroupBy(item => item))
+@foreach (var group in userService.ProductsToCheckout.GroupBy(item => item.Id))
 {
-    var productInfo = group.Key;
+    var productId = group.Key;
+    var productInfo = userService.ProductsToCheckout.First(item => item.Id == productId);
     var quantity = group.Count();
     <CheckoutProduct ProductInfo="productInfo" Quantity="quantity" ExchangeRate="currencyService.ExchangeRate" SelectedCurrency="currencyService.SelectedCurrency" />
+    <br />
 }
-
 
 @code 
 {
@@ -43,13 +46,15 @@
 
     private string Address = string.Empty;
 
+    private ApplicationUser UserProducts;
+
     private List<ProductDTO> OrderedProducts = new();
 
     protected override async Task OnInitializedAsync()
     {
         var authState = await stateProvider.GetAuthenticationStateAsync();
         var user = await userManager.GetUserAsync(authState.User);
-        var userProducts = await userService.GetUserProducts(user);
+        UserProducts = await userService.GetUserProducts(user);
         Name = await dataService.GetNameAsync();
         Address = await dataService.GetAddressAsync();
         OrderedProducts = await dataService.GetOrderedProductsAsync();
@@ -76,6 +81,13 @@
             sum += currentPrice;
         }
         return sum;
+    }
+
+    private async Task EmptyCart()
+    {
+        await cartService.RemoveCartProducts(UserProducts);
+        await cartService.RemoveProductsFromUserCartAndIncreaseStock(UserProducts);
+        cartService.ShoppingCart = new();
     }
 
     private void RedirectToConfirmation()

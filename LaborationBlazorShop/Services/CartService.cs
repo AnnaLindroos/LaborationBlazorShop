@@ -69,4 +69,34 @@ public class CartService
             return new List<Product>();
         }
     }
+    public async Task RemoveCartProducts(ApplicationUser user)
+    {
+        var cartProductsToRemove = _db.ProductsInCarts.Where(x => x.CartId.Equals(user.CartId));
+        var cpToRemove = cartProductsToRemove.ToList();
+
+        foreach (var cp in cpToRemove)
+        {
+            _db.Remove(cp);
+            await _db.SaveChangesAsync();
+        }
+    }
+
+    public async Task RemoveProductsFromUserCartAndIncreaseStock(ApplicationUser user)
+    {
+        var userProducts = _db.Users.Include(u => u.Cart).First(u => u.Id == user.Id);
+        var productsToRemove = userProducts.Cart.Products.ToList();
+
+        foreach (var product in productsToRemove)
+        {
+            var productToChange = _db.Products.FirstOrDefault(x => x.Id.Equals(product.Id));
+            productToChange.Stock++;
+            await _db.SaveChangesAsync();
+        }
+
+        foreach (var product in productsToRemove)
+        {
+            user.Cart.Products.Remove(product);
+            _db.SaveChanges();
+        }
+    }
 }

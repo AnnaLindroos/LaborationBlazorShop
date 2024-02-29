@@ -13,22 +13,26 @@
 <span>
     <p>Name: @Name</p>
     <p>Address: @Address</p>
-    <p class ="text-danger">Total: @String.Format("{0:F2}", CountTotal(OrderedProducts))</p>
+<p class="text-danger">Total: @String.Format("{0:F2}", CountTotal(OrderedProducts)) @CurrentCurrency</p>
 </span>
 
-@foreach (var group in OrderedProducts.GroupBy(item => item.Id))
+@foreach (var group in OrderedProducts.GroupBy(item => item.Title))
 {
     var productId = group.Key;
-    var productInfo = OrderedProducts.First(item => item.Id == productId);
+    var productInfo = OrderedProducts.First(item => item.Title == productId);
     var quantity = group.Count();
-    <ConfirmedProduct ProductInfo="productInfo" Quantity="quantity" SelectedCurrency="productInfo.SelectedCurrency" ExchangeRate="productInfo.ExchangeRate"/>
+    <ConfirmedProduct ProductInfo="productInfo" Quantity="quantity" ExchangeRate="productInfo.ExchangeRate" SelectedCurrency="productInfo.SelectedCurrency" />
+    <br />
 }
+
 
 @code 
 {
     private string Name = string.Empty;
 
     private string Address = string.Empty;
+
+    private string CurrentCurrency = string.Empty;
 
     private List<ProductDTO> OrderedProducts = new();
 
@@ -37,6 +41,7 @@
         Name = await dataService.GetNameAsync();
         Address = await dataService.GetAddressAsync();
         OrderedProducts = await dataService.GetOrderedProductsAsync();
+        GetCurrency();
     }
 
     public decimal CountTotal(List<ProductDTO> productsToCheckout)
@@ -47,8 +52,14 @@
         {
             var currentPrice = product.Price * product.ExchangeRate;
             sum += currentPrice;
+            //CurrentCurrency = product.SelectedCurrency;
         }
         return sum;
+    }
+
+    public async Task GetCurrency()
+    {
+        CurrentCurrency = (await dataService.GetOrderedProductsAsync()).First().SelectedCurrency;
     }
 }
 
