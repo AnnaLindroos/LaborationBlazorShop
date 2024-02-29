@@ -13,12 +13,14 @@ public class CartService
     public readonly ApplicationDbContext _db;
     public readonly UserManager<ApplicationUser> _userManager;
     public AuthenticationStateProvider _authenticationStateProvider;
+    public readonly UserService _userService;
 
-    public CartService(ApplicationDbContext db, UserManager<ApplicationUser> userManager, AuthenticationStateProvider authenticationStateProvider)
+    public CartService(ApplicationDbContext db, UserManager<ApplicationUser> userManager, AuthenticationStateProvider authenticationStateProvider, UserService userService)
     {
         _db = db;
         _userManager = userManager;
         _authenticationStateProvider = authenticationStateProvider;
+        _userService = userService;
     }
 
     public List<Product> ShoppingCart = new();
@@ -90,13 +92,27 @@ public class CartService
         {
             var productToChange = _db.Products.FirstOrDefault(x => x.Id.Equals(product.Id));
             productToChange.Stock++;
+            //_userService.ProductsToCheckout.Remove(product);
+            _userService.ProductsToCheckout.Remove(product);
             await _db.SaveChangesAsync();
         }
 
         foreach (var product in productsToRemove)
         {
             user.Cart.Products.Remove(product);
-            _db.SaveChanges();
+            await _db.SaveChangesAsync();
         }
+    }
+
+    public async Task RemoveSingleProductFromCart(Product product, ApplicationUser user)
+    {
+        var cartProductToRemove = _db.ProductsInCarts.FirstOrDefault(x => x.CartId.Equals(user.CartId) && x.ProductId.Equals(product.Id));
+        
+        product.Stock++;
+        user.Cart.Products.Remove(product);
+        _db.ProductsInCarts.Remove(cartProductToRemove);
+        
+        _userService.ProductsToCheckout.Remove(product);
+        await _db.SaveChangesAsync();
     }
 }

@@ -1,4 +1,5 @@
 ﻿@inject CurrencyService currencyService
+<script src="https://kit.fontawesome.com/162d3fb615.js" crossorigin="anonymous"></script>
 
 <div>
     <div class="media-img-wrapper mr-2">
@@ -15,6 +16,7 @@
         </h5>
         <h6>Quantity: @Quantity</h6>
     </div>
+    <button @onclick="HandleOnRemoveFromCart" class="btn btn-warning"><i class="fa-solid fa-trash"></i>Remove from cart</button>
 </div>
 
 @code {
@@ -30,5 +32,13 @@
 
     [Parameter]
     public int Quantity { get; set; }
+
+    [Parameter]
+    public EventCallback OnRemoveFromCart { get; set; }
+
+    public async Task HandleOnRemoveFromCart()
+    {
+        await OnRemoveFromCart.InvokeAsync();
+    }
 
 }

@@ -1,0 +1,15 @@
+﻿@page "/backtohomepage"
+@inject NavigationManager navigationManager
+
+<h3>Please put products in your cart to check out</h3>
+
+<button class="btn btn-primary" @onclick="RedirectToHomePage">Go back to home page</button>
+
+@code {
+
+    private void RedirectToHomePage()
+    {
+        navigationManager.NavigateTo("/");
+    }
+}
+

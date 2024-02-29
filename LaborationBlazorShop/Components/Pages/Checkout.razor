@@ -25,7 +25,7 @@
             <input @bind="@userService.Address" type="text" name="Address" id="address" placeholder="Adress" required />
         </fieldset>
     </form>
-    <button @onclick="@(() => { RedirectToConfirmation(); EmptyCart(); })" class="btn btn-primary">Confirm order</button>
+    <button @onclick="@(() => CheckIfUserHasProducts())" class="btn btn-primary">Confirm order</button>
 </span>
 
 <br />
@@ -36,7 +36,7 @@
     var productId = group.Key;
     var productInfo = userService.ProductsToCheckout.First(item => item.Id == productId);
     var quantity = group.Count();
-    <CheckoutProduct ProductInfo="productInfo" Quantity="quantity" ExchangeRate="currencyService.ExchangeRate" SelectedCurrency="currencyService.SelectedCurrency" />
+    <CheckoutProduct ProductInfo="productInfo" Quantity="quantity" ExchangeRate="currencyService.ExchangeRate" SelectedCurrency="currencyService.SelectedCurrency" OnRemoveFromCart="async () => RemoveFromCart(productInfo)" />
     <br />
 }
 
@@ -83,15 +83,25 @@
         return sum;
     }
 
-    private async Task EmptyCart()
+    private async Task RemoveFromCart(Product product)
     {
-        await cartService.RemoveCartProducts(UserProducts);
-        await cartService.RemoveProductsFromUserCartAndIncreaseStock(UserProducts);
-        cartService.ShoppingCart = new();
+        await cartService.RemoveSingleProductFromCart(product, UserProducts);
+        StateHasChanged();
     }
 
-    private void RedirectToConfirmation()
+    private async Task CheckIfUserHasProducts()
     {
-        navigationManager.NavigateTo("/confirmationpage");
+        if (userService.ProductsToCheckout.Count() > 0)
+        {
+            await cartService.RemoveCartProducts(UserProducts);
+            await cartService.RemoveProductsFromUserCartAndIncreaseStock(UserProducts);
+            cartService.ShoppingCart = new();
+
+            navigationManager.NavigateTo("/confirmationpage");
+        }
+        else
+        {
+            navigationManager.NavigateTo("/backtohomepage");
+        }
     }
 }

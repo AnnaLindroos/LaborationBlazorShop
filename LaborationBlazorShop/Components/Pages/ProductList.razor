@@ -17,7 +17,7 @@
 <AuthorizeView>
     <Authorized>
         <div class="d-flex justify-content-end">
-            <button @onclick="RedirectToCheckout" class="btn btn-primary">Go to Shoppingcart/Checkout</button>
+            <button @onclick="@(() => CheckUserHasProducts())" class="btn btn-primary">Go to Shoppingcart/Checkout</button>
         </div>
         <h5 class="text-primary">Shopping Cart:</h5>
 
@@ -88,7 +88,8 @@
 </AuthorizeView>
 
 
-@code {
+@code 
+{
 
     [Parameter]
     public int? ProductId { get; set; }
@@ -99,15 +100,24 @@
 
     public string? UserId;
 
+    public ApplicationUser User;
+
     public async void AddProduct(Product product)
     {
         await cartService.AddToCart(product, UserId);
         StateHasChanged();
     }
 
-    private void RedirectToCheckout()
+    private void CheckUserHasProducts()
     {
-        navigationManager.NavigateTo("/checkout");
+        if (cartService.ShoppingCart.Count() > 0)
+        {
+            navigationManager.NavigateTo("/checkout");
+        }
+        else
+        {
+            navigationManager.NavigateTo("/backtohomepage");
+        }
     }
 
     private void RedirectToLogin()
