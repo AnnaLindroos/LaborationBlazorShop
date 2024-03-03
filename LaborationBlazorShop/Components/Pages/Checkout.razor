@@ -23,9 +23,11 @@
             <legend class="bg-primary text-light mt-3"><b> Order Details </b></legend>
             <input @bind="@userService.Name" type="text" name="Name" id="name" placeholder="Name" required />
             <input @bind="@userService.Address" type="text" name="Address" id="address" placeholder="Adress" required />
+            @*<button @onclick="@(() => CheckIfUserHasProductsAndData())" class="btn btn-primary">Confirm order</button>*@
+            @*<button @onclick="@(async () => { StateHasChanged(); await CheckIfUserHasProductsAndEnteredData(); })" class="btn btn-primary">Confirm order</button>*@
         </fieldset>
     </form>
-    <button @onclick="@(() => CheckIfUserHasProducts())" class="btn btn-primary">Confirm order</button>
+    <button @onclick="CheckIfUserHasProductsAndData" class="btn btn-primary">Confirm order</button>
 </span>
 
 <br />
@@ -89,19 +91,20 @@
         StateHasChanged();
     }
 
-    private async Task CheckIfUserHasProducts()
+    private async Task CheckIfUserHasProductsAndData()
     {
-        if (userService.ProductsToCheckout.Count() > 0)
-        {
-            await cartService.RemoveCartProducts(UserProducts);
-            await cartService.RemoveProductsFromUserCartAndIncreaseStock(UserProducts);
-            cartService.ShoppingCart = new();
+        var products = userService.ProductsToCheckout;
 
-            navigationManager.NavigateTo("/confirmationpage");
+        if ((userService.Name == string.Empty || userService.Address == string.Empty) || products.Count() == 0)
+        {
+            navigationManager.NavigateTo("/failedcheckoutform");
         }
+
         else
         {
-            navigationManager.NavigateTo("/backtohomepage");
+            navigationManager.NavigateTo("/confirmationpage");
+            await cartService.EmptyCartAfterPurchase(UserProducts);
         }
     }
+
 }

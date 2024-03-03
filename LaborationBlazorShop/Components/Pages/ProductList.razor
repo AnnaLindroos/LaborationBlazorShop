@@ -47,6 +47,11 @@
                     }
                 </ul>
             }
+            if (ProductId > 5)
+            {
+                <h3>No product with that Id</h3>
+                <button class="btn btn-primary" @onclick="RedirectToHomePage">Go back to home page</button>
+            }
             else
             {
                 <SingleProduct ProductInfo="SingleProduct" ExchangeRate="currencyService.ExchangeRate" SelectedCurrency="currencyService.SelectedCurrency" OnAddToCart="async () => AddProduct(SingleProduct)" />
@@ -64,7 +69,6 @@
             {
                 <p>Loading...</p>
             }
-
             else
             {
                 if (ProductId is null)
@@ -77,6 +81,11 @@
                             <ViewProducts ProductInfo="product" ExchangeRate="currencyService.ExchangeRate" SelectedCurrency="currencyService.SelectedCurrency" OnAddToCart=" () => RedirectToLogin()" />
                         }
                     </ul>
+                }
+                if (ProductId > 5)
+                {
+                    <h3>No product with that Id</h3>
+                    <button class="btn btn-primary" @onclick="RedirectToHomePage">Go back to home page</button>
                 }
                 else
                 {
@@ -100,8 +109,6 @@
 
     public string? UserId;
 
-    public ApplicationUser User;
-
     public async void AddProduct(Product product)
     {
         await cartService.AddToCart(product, UserId);
@@ -118,6 +125,11 @@
         {
             navigationManager.NavigateTo("/backtohomepage");
         }
+    }
+
+    private void RedirectToHomePage()
+    {
+        navigationManager.NavigateTo("/");
     }
 
     private void RedirectToLogin()
@@ -140,10 +152,17 @@
 
             UserId = userId;
 
+            if (UserId is not null)
+            {
+                await cartService.ViewCart(userId);
+
+            }
+
             if (ProductId is null)
             {
                 Products = await productService.GetAllProducts();
             }
+
             else
             {
                 var result = await productService.GetProductById((int)ProductId);

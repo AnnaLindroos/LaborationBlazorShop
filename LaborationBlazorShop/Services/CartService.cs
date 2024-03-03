@@ -36,7 +36,7 @@ public class CartService
                 ApplicationUserId = UserId,
                 Products = new List<Product>()
             };
-            await _db.Carts.AddAsync(newCart);
+            _db.Carts.Add(newCart);
             user.Cart = newCart;
             await _db.SaveChangesAsync();
         }
@@ -55,23 +55,28 @@ public class CartService
         decreaseProductStock.Stock--;
         await _db.ProductsInCarts.AddAsync(productToAdd);
         await _db.SaveChangesAsync();
-        ShoppingCart = await ViewCart(UserId);
+        await ViewCart(UserId);
     }
-    public async Task<List<Product>> ViewCart(string UserId)
+
+    public async Task ViewCart(string UserId)
     {
         var user = await _userManager.FindByIdAsync(UserId);
 
         if (user.CartId is not null)
         {
-            var cart = await _db.Carts.FirstAsync(x => x.ApplicationUserId.Equals(UserId));
-            return cart.Products.ToList();
+            var cartProducts = _db.ProductsInCarts
+                .Where(x => x.CartId
+                .Equals(user.CartId))
+                .Select(c => c.Product);
+                ShoppingCart = cartProducts.ToList();
         }
         else
         {
-            return new List<Product>();
+            ShoppingCart = new List<Product>();
         }
     }
-    public async Task RemoveCartProducts(ApplicationUser user)
+
+    public async Task RemoveAllCartProducts(ApplicationUser user)
     {
         var cartProductsToRemove = _db.ProductsInCarts.Where(x => x.CartId.Equals(user.CartId));
         var cpToRemove = cartProductsToRemove.ToList();
@@ -92,16 +97,21 @@ public class CartService
         {
             var productToChange = _db.Products.FirstOrDefault(x => x.Id.Equals(product.Id));
             productToChange.Stock++;
-            //_userService.ProductsToCheckout.Remove(product);
             _userService.ProductsToCheckout.Remove(product);
-            await _db.SaveChangesAsync();
-        }
-
-        foreach (var product in productsToRemove)
-        {
             user.Cart.Products.Remove(product);
+            ShoppingCart.Remove(product);
             await _db.SaveChangesAsync();
         }
+    }
+
+    public async Task EmptyCartAfterPurchase(ApplicationUser user)
+    {
+        var userProducts = await _userService.GetUserProducts(user);
+        await Task.Delay(2000);
+        await RemoveAllCartProducts(userProducts);
+        await RemoveProductsFromUserCartAndIncreaseStock(userProducts);
+        ShoppingCart = new();
+        await _db.SaveChangesAsync();
     }
 
     public async Task RemoveSingleProductFromCart(Product product, ApplicationUser user)
@@ -111,6 +121,7 @@ public class CartService
         product.Stock++;
         user.Cart.Products.Remove(product);
         _db.ProductsInCarts.Remove(cartProductToRemove);
+        ShoppingCart.Remove(product);
         
         _userService.ProductsToCheckout.Remove(product);
         await _db.SaveChangesAsync();
