@@ -93,13 +93,13 @@ public class CartService
         var userProducts = _db.Users.Include(u => u.Cart).First(u => u.Id == user.Id);
         var productsToRemove = userProducts.Cart.Products.ToList();
 
-        foreach (var product in productsToRemove)
+        foreach (var productToRemove in productsToRemove)
         {
-            var productToChange = _db.Products.FirstOrDefault(x => x.Id.Equals(product.Id));
+            var productToChange = _db.Products.FirstOrDefault(x => x.Id.Equals(productToRemove.Id));
             productToChange.Stock++;
-            _userService.ProductsToCheckout.Remove(product);
-            user.Cart.Products.Remove(product);
-            ShoppingCart.Remove(product);
+            _userService.ProductsToCheckout.Remove(productToRemove);
+            user.Cart.Products.Remove(productToRemove);
+            ShoppingCart.Remove(productToRemove);
             await _db.SaveChangesAsync();
         }
     }

@@ -27,8 +27,4 @@ public class ProductService
     {
         return await _applicationDbContext.Products.FirstOrDefaultAsync(x => x.Id == id);
     }
-    public async Task<CartProduct?> IsProductInCart(Product product)
-    {
-        return await _applicationDbContext.ProductsInCarts.FirstOrDefaultAsync(x => x.ProductId.Equals(product.Id));
-    }
 }

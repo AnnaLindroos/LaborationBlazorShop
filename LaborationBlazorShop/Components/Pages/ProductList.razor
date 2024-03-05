@@ -109,7 +109,7 @@
 
     public string? UserId;
 
-    public async void AddProduct(Product product)
+    public async Task AddProduct(Product product)
     {
         await cartService.AddToCart(product, UserId);
         StateHasChanged();

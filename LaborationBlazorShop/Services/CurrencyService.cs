@@ -14,8 +14,6 @@ public class CurrencyService
         this.apiKey = apiKey;
     }
 
-    // Add a property to store the selected currency
-
     public decimal ExchangeRate { get; set; } = 1;
     public string SelectedCurrency { get; set; } = "USD";
 

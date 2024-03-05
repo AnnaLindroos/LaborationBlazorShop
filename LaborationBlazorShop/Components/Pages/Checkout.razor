@@ -23,8 +23,6 @@
             <legend class="bg-primary text-light mt-3"><b> Order Details </b></legend>
             <input @bind="@userService.Name" type="text" name="Name" id="name" placeholder="Name" required />
             <input @bind="@userService.Address" type="text" name="Address" id="address" placeholder="Adress" required />
-            @*<button @onclick="@(() => CheckIfUserHasProductsAndData())" class="btn btn-primary">Confirm order</button>*@
-            @*<button @onclick="@(async () => { StateHasChanged(); await CheckIfUserHasProductsAndEnteredData(); })" class="btn btn-primary">Confirm order</button>*@
         </fieldset>
     </form>
     <button @onclick="CheckIfUserHasProductsAndData" class="btn btn-primary">Confirm order</button>
@@ -51,27 +49,6 @@
     private ApplicationUser UserProducts;
 
     private List<ProductDTO> OrderedProducts = new();
-
-    protected override async Task OnInitializedAsync()
-    {
-        var authState = await stateProvider.GetAuthenticationStateAsync();
-        var user = await userManager.GetUserAsync(authState.User);
-        UserProducts = await userService.GetUserProducts(user);
-        Name = await dataService.GetNameAsync();
-        Address = await dataService.GetAddressAsync();
-        OrderedProducts = await dataService.GetOrderedProductsAsync();
-    }
-
-    private void OnStateChange() => InvokeAsync(() => StateHasChanged());
-
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (firstRender)
-        {
-            currencyService.OnStateChange += OnStateChange;
-            StateHasChanged();
-        }
-    }
 
     public decimal CountTotal(List<Product> productsToCheckout)
     {
@@ -107,4 +84,25 @@
         }
     }
 
+    private void OnStateChange() => InvokeAsync(() => StateHasChanged());
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            currencyService.OnStateChange += OnStateChange;
+            StateHasChanged();
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await stateProvider.GetAuthenticationStateAsync();
+        var user = await userManager.GetUserAsync(authState.User);
+        UserProducts = await userService.GetUserProducts(user);
+        await userService.GetShoppingCartProducts(user);
+        Name = await dataService.GetNameAsync();
+        Address = await dataService.GetAddressAsync();
+        OrderedProducts = await dataService.GetOrderedProductsAsync();
+    }
 }

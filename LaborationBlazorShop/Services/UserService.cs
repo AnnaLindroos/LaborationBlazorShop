@@ -42,8 +42,16 @@ namespace LaborationBlazorShop.Services
         public async Task<ApplicationUser> GetUserProducts(ApplicationUser user)
         {
             var userProducts = _context.Users.Include(u => u.Cart).First(u => u.Id == user.Id);
-            ProductsToCheckout = userProducts.Cart.Products.ToList();
             return userProducts;
+        }
+
+        public async Task GetShoppingCartProducts(ApplicationUser user)
+        {
+            var products = _context.ProductsInCarts
+                .Where(x => x.CartId
+                .Equals(user.CartId))
+                .Select(c => c.Product);
+                ProductsToCheckout = products.ToList();
         }
 
         public async Task<List<ProductDTO>> ConfirmedProducts()
